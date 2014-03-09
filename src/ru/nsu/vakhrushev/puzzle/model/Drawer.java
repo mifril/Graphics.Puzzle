@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
  */
 
 public class Drawer {
-    public void drawLine(BufferedImage image, int startX, int startY, int endX, int endY) {
+    public long drawLine(BufferedImage image, int startX, int startY, int endX, int endY) {
         int fixingDeltaX = 0;
         int fixingDeltaY = 0;
         int fixingDeltaError = 0;
@@ -37,6 +37,7 @@ public class Drawer {
         int currX = startX;
         int currY = startY;
         int error = deltaError/2;
+        long pixelsDrew = 1;
 
         image.setRGB(currX, currY, 0);
 
@@ -51,10 +52,12 @@ public class Drawer {
                 currY += fixingDeltaY;
             }
             image.setRGB(currX, currY, 0);
+            ++pixelsDrew;
         }
+        return pixelsDrew;
     }
 
-    public void drawTriangleBorders(Triangle triangle, BufferedImage image) {
+    public long drawTriangleBorders(Triangle triangle, BufferedImage image) {
         double angle = Math.toRadians(triangle.getCurRotateAngle());
         int centerX = triangle.getCurCenterX();
         int centerY = triangle.getCurCenterY();
@@ -67,25 +70,39 @@ public class Drawer {
         int y2 = (int)(Math.sin(angle) * (triangle.getSecondVertexX() - centerX) + Math.cos(angle) * (triangle.getSecondVertexY() - centerY)) + centerY;
         int y3 = (int)(Math.sin(angle) * (triangle.getThirdVertexX() - centerX) + Math.cos(angle) * (triangle.getThirdVertexY() - centerY)) + centerY;
 
-        drawLine(image, x1, y1, x2, y2);
-        drawLine(image, x1, y1, x3, y3);
-        drawLine(image, x3, y3, x2, y2);
-
+        long bordersPixels = 0;
+        bordersPixels += drawLine(image, x1, y1, x2, y2);
+        bordersPixels += drawLine(image, x1, y1, x3, y3);
+        bordersPixels += drawLine(image, x3, y3, x2, y2);
+        return bordersPixels;
     }
 
-    public void drawTriangle(Triangle triangle, BufferedImage readImage, BufferedImage image, boolean needBlend) {
-        int color = 0;
+    public void drawTriangle(Triangle triangle, Model model) {
+        BufferedImage image = model.getImage();
+
+        BufferedImage readImage = model.getReadImage();
+        boolean needBlend = model.isNeedAlphaBlend();
+        boolean needFiltering = model.isNeedBilinearFiltering();
+
         double angle = Math.toRadians(triangle.getCurRotateAngle());
         int centerX = triangle.getCurCenterX();
         int centerY = triangle.getCurCenterY();
 
-        int x1 = (int)(Math.cos(angle) * (triangle.getFirstVertexX() - centerX) - Math.sin(angle) * (triangle.getFirstVertexY()  - centerY)) + centerX;
-        int x2 = (int)(Math.cos(angle) * (triangle.getSecondVertexX() - centerX)- Math.sin(angle) * (triangle.getSecondVertexY() - centerY)) + centerX;
-        int x3 = (int)(Math.cos(angle) * (triangle.getThirdVertexX() - centerX) - Math.sin(angle) * (triangle.getThirdVertexY() - centerY)) + centerX;
+        int x1 = (int)(Math.cos(angle) * (triangle.getFirstVertexX() - centerX) -
+                        Math.sin(angle) * (triangle.getFirstVertexY()  - centerY)) + centerX;
+        int x2 = (int)(Math.cos(angle) * (triangle.getSecondVertexX() - centerX)-
+                        Math.sin(angle) * (triangle.getSecondVertexY() - centerY)) + centerX;
+        int x3 = (int)(Math.cos(angle) * (triangle.getThirdVertexX() - centerX) -
+                        Math.sin(angle) * (triangle.getThirdVertexY() - centerY)) + centerX;
 
-        int y1 = (int)(Math.sin(angle) * (triangle.getFirstVertexX() - centerX) + Math.cos(angle) * (triangle.getFirstVertexY() - centerY)) + centerY;
-        int y2 = (int)(Math.sin(angle) * (triangle.getSecondVertexX() - centerX) + Math.cos(angle) * (triangle.getSecondVertexY() - centerY)) + centerY;
-        int y3 = (int)(Math.sin(angle) * (triangle.getThirdVertexX() - centerX) + Math.cos(angle) * (triangle.getThirdVertexY() - centerY)) + centerY;
+        int y1 = (int)(Math.sin(angle) * (triangle.getFirstVertexX() - centerX) +
+                        Math.cos(angle) * (triangle.getFirstVertexY() - centerY)) + centerY;
+        int y2 = (int)(Math.sin(angle) * (triangle.getSecondVertexX() - centerX) +
+                        Math.cos(angle) * (triangle.getSecondVertexY() - centerY)) + centerY;
+        int y3 = (int)(Math.sin(angle) * (triangle.getThirdVertexX() - centerX) +
+                        Math.cos(angle) * (triangle.getThirdVertexY() - centerY)) + centerY;
+
+//        System.err.println("Vertexes: first: " + x1 +", " + y1 + ". second: " + x2 +", " + y2 + ". second: " + x3 +", " + y3);
 
         if (y2 < y1) {
             int tmp = y1;
@@ -145,14 +162,29 @@ public class Drawer {
             }
         }
 
+        long totalPixels = 0;
+        long clearPixels = 0;
+        int pixel = 0;
+
         for (int currY = y1; currY < y2; ++currY){
             for (int currX = (int)Math.round(currStartX); currX <= (int)Math.round(currEndX); ++currX){
+//                setPixel(triangle, model, currX, currY);
+
+                pixel = getPixelByCoordinates(triangle, readImage, currX, currY, needFiltering);
                 if (needBlend) {
-                    color = Filter.getAlphaBlendedPixel(getPixelByCoordinates(triangle, readImage, currX, currY));
+                    pixel = Filter.getAlphaBlendedPixel(pixel);
+                    if (pixel == Model.BACKGROUND_COLOR) {
+                        ++clearPixels;
+                    }
                 } else {
-                    color = getPixelByCoordinates(triangle, readImage, currX, currY) & (~Filter.ARGB_ALPHA_RANGE);
+                    pixel &= (~Filter.ARGB_ALPHA_RANGE);
                 }
-                image.setRGB(currX, currY, color);
+
+                if (currX < image.getWidth() && currY < image.getHeight()) {
+                    image.setRGB(currX, currY, pixel);
+                }
+
+                ++totalPixels;
             }
             currStartX += deltaX13;
             currEndX += deltaX12;
@@ -165,22 +197,53 @@ public class Drawer {
         }
         for (int currY = y2; currY <= y3; ++currY){
             for (int currX = (int)Math.round(currStartX); currX <= (int)Math.round(currEndX); ++currX){
+//                setPixel(triangle, model, currX, currY);
+
                 if (needBlend) {
-                    color = Filter.getAlphaBlendedPixel(getPixelByCoordinates(triangle, readImage, currX, currY));
+                    pixel = Filter.getAlphaBlendedPixel(getPixelByCoordinates(triangle, readImage, currX, currY, needFiltering));
+                    if (pixel == Model.BACKGROUND_COLOR) {
+                        ++clearPixels;
+                    }
                 } else {
-                    color = getPixelByCoordinates(triangle, readImage, currX, currY) & (~Filter.ARGB_ALPHA_RANGE);
+                    pixel = getPixelByCoordinates(triangle, readImage, currX, currY, needFiltering) & (~Filter.ARGB_ALPHA_RANGE);
                 }
-                image.setRGB(currX, currY, color);
+                if (currX < image.getWidth() && currY < image.getHeight()) {
+                    image.setRGB(currX, currY, pixel);
+                }
+
+                ++totalPixels;
             }
             currStartX += copyDeltaX13;
             currEndX += deltaX23;
         }
-        drawTriangleBorders(triangle, image);
+        long borderPixels = drawTriangleBorders(triangle, image);
+
+        triangle.setBorderPixels(borderPixels);
+        triangle.setClearPixels(clearPixels);
+        triangle.setTotalPixels(totalPixels);
     }
 
-    int getPixelByCoordinates(Triangle triangle, BufferedImage readImage, int x, int y) {
-        int uFactor = readImage.getWidth();
-        int vFactor = readImage.getHeight();
+    private void setPixel(Triangle triangle, Model model, int x, int y) {
+        BufferedImage readImage = model.getReadImage();
+        BufferedImage image = model.getImage();
+
+        int pixel = getPixelByCoordinates(triangle, readImage, x, y, model.isNeedBilinearFiltering());
+        if (model.isNeedAlphaBlend()) {
+            pixel = Filter.getAlphaBlendedPixel(pixel);
+            if (pixel == Model.BACKGROUND_COLOR) {
+                triangle.incrementClearPixels();
+            }
+        } else {
+            pixel &= (~Filter.ARGB_ALPHA_RANGE);
+        }
+        if (x < readImage.getWidth() && y < readImage.getHeight()) {
+            image.setRGB(x, y, pixel);
+        }
+    }
+
+    private int getPixelByCoordinates(Triangle triangle, BufferedImage readImage, int x, int y, boolean needFiltering) {
+        int readImageWidth = readImage.getWidth();
+        int readImageHeight = readImage.getHeight();
         double angle = Math.toRadians(-triangle.getCurRotateAngle());
         int centerX = triangle.getCurCenterX();
         int centerY = triangle.getCurCenterY();
@@ -188,23 +251,28 @@ public class Drawer {
         int xInCenterCoordinates = (int)(Math.cos(angle) *  (x - centerX) - Math.sin(angle) * (y - centerY));
         int yInCenterCoordinates = (int)(Math.sin(angle) * (x - centerX) + Math.cos(angle) * (y - centerY));
 
-        int u = (int)(yInCenterCoordinates + triangle.getCenterU() * uFactor);
-        int v = (int)(xInCenterCoordinates + triangle.getCenterV() * vFactor);
+        int u = (int)(yInCenterCoordinates + triangle.getCenterU() * readImageWidth);
+        int v = (int)(xInCenterCoordinates + triangle.getCenterV() * readImageHeight);
 
-        if (u > 127) {
-            u = 127;
+        if (u > readImageWidth - 1) {
+            u = readImageWidth - 1;
         } else if (u < 0) {
             u = 0;
         }
-        if (v > 127) {
-            v = 127;
+        if (v > readImageHeight - 1) {
+            v = readImageHeight - 1;
         } else if (v < 0) {
             v = 0;
         }
-        return readImage.getRGB(v, u);
+
+        int pixel = readImage.getRGB(v, u);
+        if (needFiltering && u > 0 && v > 0 && u < readImageWidth - 1 && v < readImageHeight - 1) {
+            pixel = Filter.getBilinearFilteredPixel(readImage, v, u, needFiltering);
+        }
+        return pixel;
     }
 
-    void fillBackground(BufferedImage image, int background) {
+    public void fillBackground(BufferedImage image, int background) {
         for (int x = 0; x < image.getWidth(); ++x) {
             for (int y = 0; y < image.getHeight(); ++y) {
                 image.setRGB(x, y, background);

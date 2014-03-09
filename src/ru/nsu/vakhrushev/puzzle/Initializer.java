@@ -11,9 +11,7 @@ import javax.swing.*;
  */
 public class Initializer {
     public static void main(String [] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
+
                 try {
 //            PrintStream out = new PrintStream(new FileOutputStream("log.txt"));
 //            System.setErr(out);
@@ -27,7 +25,5 @@ public class Initializer {
                     e.printStackTrace();
                 }
             }
-        });
 
-    }
 }

@@ -35,7 +35,7 @@ public class Controller {
     }
 
     public void animationForceMove(int position) {
-        model.forceMove(position);
+        model.moveTriangles(position);
     }
 
     public void setTimer(final JSlider slider, final JFrame mainFrame) {
@@ -44,19 +44,10 @@ public class Controller {
             public void actionPerformed(ActionEvent e) {
                 int sliderValue = slider.getValue();
                 if (sliderValue != InterfacePanel.MAX_SLIDER_VALUE) {
-                    int rotateDirection = (sliderValue <= InterfacePanel.MAX_SLIDER_VALUE / 2) ? (1) : (-1);
-                    model.moveTriangles(rotateDirection);
                     slider.setValue(sliderValue + 1);
                 } else {
                     stopTimer();
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        mainFrame.repaint();
-
-                    }
-                });
             }
         });
     }

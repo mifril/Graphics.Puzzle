@@ -1,10 +1,11 @@
 package ru.nsu.vakhrushev.puzzle.view;
 
 import ru.nsu.vakhrushev.puzzle.model.Model;
-import ru.nsu.vakhrushev.puzzle.model.util.Filter;
 
 import javax.swing.*;
+import javax.swing.event.MouseInputAdapter;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 /**
@@ -15,10 +16,17 @@ public class ImagePanel extends JPanel {
 
     private Model model;
 
-    public ImagePanel(Model model) {
+    public ImagePanel(final Model model, final MainFrame mainFrame) {
         this.model = model;
         setBorder(BorderFactory.createLineBorder(Color.black));
-        setMinimumSize(new Dimension(400, 400));
+        addMouseMotionListener(new MouseInputAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                super.mouseMoved(e);
+                model.findTriangleUnderCursor(e.getX(), e.getY());
+                mainFrame.updateInfoBar();
+            }
+        });
     }
 
     @Override
@@ -27,7 +35,7 @@ public class ImagePanel extends JPanel {
         model.paintTrianglesInImage();
         BufferedImage image = model.getImage();
         if (model.isNeedBilinearFiltering()) {
-            Filter.useBilinearFilter(image);
+        //    Filter.useBilinearFilter(image);
         }
         g.drawImage(image, 0, 0, null);
     }

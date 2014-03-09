@@ -4,6 +4,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
+import java.util.Random;
 
 /**
  * Created by Maxim Vakhrushev on 23.02.14 13:44.
@@ -21,13 +23,17 @@ public class Model {
     private int heightOffset;
     private int pixels[];
     private Triangle [] triangles;
+    private Triangle triangleUnderCursor;
     private Drawer drawer;
     private boolean needAlphaBlend = false;
     private boolean needBilinearFiltering = false;
+    private Random random;
 
     public Model (String imageFileName) {
         try {
             assert (imageFileName != null);
+            random = new Random( new Date().getTime() );
+
             readImage = ImageIO.read(new File(imageFileName));
             readImageWidth = readImage.getWidth();
             readImageHeight = readImage.getHeight();
@@ -53,7 +59,7 @@ public class Model {
     public void paintTrianglesInImage() {
         drawer.fillBackground(image, BACKGROUND_COLOR);
         for(Triangle triangle : triangles) {
-            drawer.drawTriangle(triangle, readImage, image, needAlphaBlend);
+            drawer.drawTriangle(triangle, this);
         }
     }
 
@@ -63,16 +69,20 @@ public class Model {
         }
     }
 
-    public void moveTriangles(int rotateDirection) {
+    public void moveTriangles(int position) {
         for (Triangle triangle : triangles) {
-            triangle.moveTriangle(rotateDirection);
+            triangle.moveTriangle(position);
         }
     }
 
-    public void forceMove(int position) {
+    public void findTriangleUnderCursor(int x, int y) {
         for (Triangle triangle : triangles) {
-            triangle.moveTriangleForce(position);
+            if (triangle.containsPoint(x, y)) {
+                triangleUnderCursor = triangle;
+                return;
+            }
         }
+        triangleUnderCursor = null;
     }
 
     public void resetNeedBlend() {
@@ -95,16 +105,12 @@ public class Model {
         return image;
     }
 
-    public int getImageWidth() {
-        return imageWidth;
+    public BufferedImage getReadImage() {
+        return readImage;
     }
 
-    public int getImageHeight() {
-        return imageHeight;
-    }
-
-    public int[] getPixels() {
-        return pixels;
+    public Triangle getTriangleUnderCursor() {
+        return triangleUnderCursor;
     }
 
     private void setTriangles() {
@@ -147,7 +153,7 @@ public class Model {
                 pointsY[3] = widthOffset + y;
  //               System.err.println("1. Expected center U = " + pointsU[0]);
  //               System.err.println("1. Expected center V = " + pointsV[0]);
-                triangles[trianglesCount++] = new Triangle(pointsU, pointsV, pointsX, pointsY, 0);
+                triangles[trianglesCount++] = new Triangle(pointsU, pointsV, pointsX, pointsY, 0, imageWidth, imageHeight, random);
             }
             /*
              * triangles  *
@@ -179,7 +185,7 @@ public class Model {
 //                System.err.println("2. Expected center U = " + pointsU[0]);
 //                System.err.println("2. Expected center V = " + pointsV[0]);
 
-                triangles[trianglesCount++] = new Triangle(pointsU, pointsV, pointsX, pointsY, 0);
+                triangles[trianglesCount++] = new Triangle(pointsU, pointsV, pointsX, pointsY, 0, imageWidth, imageHeight, random);
             }
         }
     }

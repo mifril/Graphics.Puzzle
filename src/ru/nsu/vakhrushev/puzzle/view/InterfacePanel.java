@@ -1,6 +1,7 @@
 package ru.nsu.vakhrushev.puzzle.view;
 
 import ru.nsu.vakhrushev.puzzle.controller.Controller;
+import ru.nsu.vakhrushev.puzzle.model.Model;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -17,7 +18,11 @@ public class InterfacePanel extends JPanel {
     public static final int MAX_SLIDER_VALUE = 360;
     public static final int INIT_SLIDER_VALUE = 0;
 
-    public InterfacePanel (final Controller controller, final JFrame mainFrame) {
+    private Model model;
+
+    public InterfacePanel (final Controller controller, Model model, final JFrame mainFrame) {
+        this.model = model;
+
         JCheckBox filterCheckBox = new JCheckBox("Filter");
         JCheckBox blendCheckBox = new JCheckBox("Blend");
         JButton startButton = new JButton("Start/Stop");
@@ -66,7 +71,11 @@ public class InterfacePanel extends JPanel {
             @Override
             public void stateChanged(ChangeEvent e) {
                 controller.animationForceMove(slider.getValue());
-                mainFrame.repaint();
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        mainFrame.repaint();                 }
+                });
             }
         });
 
@@ -94,4 +103,6 @@ public class InterfacePanel extends JPanel {
                     .addComponent(slider))
         );
     }
+
+
 }
