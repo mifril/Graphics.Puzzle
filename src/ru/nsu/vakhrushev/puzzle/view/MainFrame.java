@@ -11,16 +11,14 @@ import java.awt.*;
  * Created by Maxim Vakhrushev on 23.02.14 13:44.
  */
 public class MainFrame extends JFrame {
-    private final JPanel imagePanel;
-    private final InterfacePanel interfacePanel;
     private Model model;
     private JLabel infoBar;
 
     public MainFrame(Model model, Controller controller) {
         this.model = model;
 
-        imagePanel = new ImagePanel(model, this);
-        interfacePanel = new InterfacePanel(controller, model, this);
+        JPanel imagePanel = new ImagePanel(model, this);
+        JPanel interfacePanel = new InterfacePanel(controller, this);
         infoBar = new JLabel("Triangle info");
 
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -31,14 +29,12 @@ public class MainFrame extends JFrame {
 
         setPreferredSize(new Dimension(600, 600));
         setMaximumSize(new Dimension(1000, 600));
-        setMinimumSize(new Dimension(400, 400));
+        setMinimumSize(new Dimension(500, 500));
         setSize(new Dimension(600, 600));
 
         setTitle("Puzzle");
         controller.initAnimationParameters();
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setResizable(true);
-        pack();
         setLocationRelativeTo(null);
     }
 

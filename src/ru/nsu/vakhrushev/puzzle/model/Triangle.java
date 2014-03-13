@@ -15,23 +15,22 @@ public class Triangle {
     private int imageWidth;
     private int imageHeight;
 
+    private double centerU;
+    private double centerV;
+
     private int [] vertexesX;
     private int [] vertexesY;
     private int curCenterX;
     private int curCenterY;
 
-    private int startCenterX;
-    private int startCenterY;
     private int [] startVertexesX;
     private int [] startVertexesY;
+    private int startCenterX;
+    private int startCenterY;
 
     private double deltaX;
     private double deltaY;
 
-    private double [] vertexesU;
-    private double [] vertexesV;
-    private double centerU;
-    private double centerV;
 
     private double curRotateAngle;
     private double deltaAngle;
@@ -40,13 +39,11 @@ public class Triangle {
     private long clearPixels;
     private long borderPixels;
 
-    public Triangle (double [] pointsU, double [] pointsV, double [] pointsX, double [] pointsY, double rotateAngle, int imageWidth, int imageHeight, Random random) {
+    public Triangle (double centerU, double centerV, double [] pointsX, double [] pointsY, double rotateAngle, int imageWidth, int imageHeight, Random random) {
         this.vertexesX = new int[3];
         this.vertexesY = new int[3];
         this.startVertexesX = new int[3];
         this.startVertexesY = new int[3];
-        this.vertexesU = new double[3];
-        this.vertexesV = new double[3];
 
         this.curCenterX = (int)pointsX[0];
         this.curCenterY = (int)pointsY[0];
@@ -60,10 +57,8 @@ public class Triangle {
             this.vertexesY[i - 1] = (int)pointsY[i];
         }
 
-        this.centerU = pointsU[0];
-        this.centerV = pointsV[0];
-        System.arraycopy(pointsU, 1, this.vertexesU, 0, pointsU.length - 1);
-        System.arraycopy(pointsV, 1, this.vertexesV, 0, pointsV.length - 1);
+        this.centerU = centerU;
+        this.centerV = centerV;
         this.curRotateAngle = rotateAngle;
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;
@@ -74,7 +69,6 @@ public class Triangle {
     }
 
     public void initFinishPosition() {
-//        System.err.println("IMAGE SIZE: " + imageWidth + ", " + imageHeight);
         double finishRotateAngle = random.nextInt(MAX_ANGLE);
         deltaAngle = finishRotateAngle / 180;
 
@@ -87,39 +81,44 @@ public class Triangle {
         int positionNorth = Math.abs(random.nextInt() % 3);
         int positionWest = Math.abs(random.nextInt() % 3);
 
-        finishMinCenterY = imageWidth / 6 + positionNorth * imageWidth / 6;
-        finishMaxCenterY = imageWidth / 4 + positionNorth * imageWidth / 6;
-        finishMinCenterX = imageHeight / 6 + positionWest * imageWidth / 6;
-        finishMaxCenterX = imageHeight / 4 + positionWest * imageWidth / 6;
-
-//        System.err.println("Max x: " + finishMinCenterX + ", " + finishMaxCenterX);
-
-
-/*
-        if (positionNorth == 1) {
-            finishMinCenterY = imageWidth / 6;
-            finishMaxCenterY = imageWidth / 5;
-        } else {
-            finishMinCenterY = imageWidth - imageWidth / 5;
-            finishMaxCenterY = imageWidth - imageWidth / 6;
+        switch (positionNorth) {
+            case 0:
+                finishMinCenterY = imageHeight / 6;
+                finishMaxCenterY = imageHeight / 5;
+                break;
+            case 1:
+                finishMinCenterY = imageHeight / 3;
+                finishMaxCenterY = 2 * imageHeight / 3;
+                break;
+            case 2:
+                finishMinCenterY = imageHeight -  imageHeight / 5;
+                finishMaxCenterY = imageHeight - imageHeight / 6;
+                break;
+            default:
+                throw new IllegalStateException("Invalid value of positionNorth: " + positionNorth);
         }
-        if (positionWest == 1) {
-            finishMinCenterX = imageHeight / 6;
-            finishMaxCenterX = imageHeight / 5;
-        } else {
-            finishMinCenterX = imageWidth - imageHeight / 5;
-            finishMaxCenterX = imageHeight - imageHeight / 6;
+        switch (positionWest) {
+            case 0:
+                finishMinCenterX = imageWidth / 6;
+                finishMaxCenterX = imageWidth / 5;
+                break;
+            case 1:
+                finishMinCenterX = imageWidth / 3;
+                finishMaxCenterX = 2 * imageWidth / 3;
+                break;
+            case 2:
+                finishMinCenterX = imageWidth - imageWidth / 5;
+                finishMaxCenterX = imageWidth - imageWidth / 6;
+                break;
+            default:
+                throw new IllegalStateException("Invalid value of positionWest: " + positionWest);
         }
-*/
+
         int finishCenterX = random.nextInt(finishMaxCenterX - finishMinCenterX + 1) + finishMinCenterX;
         int finishCenterY = random.nextInt(finishMaxCenterY - finishMinCenterY + 1) + finishMinCenterY;
 
-//        System.err.println(finishCenterX + ", " + finishCenterY);
-
         deltaX = (finishCenterX - curCenterX) / 180.0;
         deltaY = (finishCenterY - curCenterY) / 180.0;
-//        System.err.println(deltaX + ", " + deltaY);
-
     }
 
     public void moveTriangle(int position) {
@@ -131,7 +130,6 @@ public class Triangle {
                 vertexesX[i] = (int)(Math.round(startVertexesX[i] + position * deltaX));
                 vertexesY[i] = (int)(Math.round(startVertexesY[i] + position * deltaY));
             }
-            //System.err.println("1. Position = " + position + ". Changed: " + curCenterX + ", " + curCenterY);
         } else {
             curRotateAngle = (InterfacePanel.MAX_SLIDER_VALUE - position) * deltaAngle;
             curCenterX = (int)(Math.round(startCenterX + (InterfacePanel.MAX_SLIDER_VALUE - position) * deltaX));
@@ -140,7 +138,6 @@ public class Triangle {
                 vertexesX[i] = (int)(Math.round(startVertexesX[i] + (InterfacePanel.MAX_SLIDER_VALUE - position) * deltaX));
                 vertexesY[i] = (int)(Math.round(startVertexesY[i] + (InterfacePanel.MAX_SLIDER_VALUE - position) * deltaY));
             }
-            //System.err.println("2. Position = " + position + ". Changed: " + curCenterX + ", " + curCenterY);
         }
     }
 
@@ -176,10 +173,6 @@ public class Triangle {
 
     public double getCurRotateAngle() {
         return curRotateAngle;
-    }
-
-    public void incrementClearPixels() {
-        ++clearPixels;
     }
 
     public void setBorderPixels(long borderPixels) {

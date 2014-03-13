@@ -21,7 +21,6 @@ public class Model {
     private int imageHeight;
     private int widthOffset;
     private int heightOffset;
-    private int pixels[];
     private Triangle [] triangles;
     private Triangle triangleUnderCursor;
     private Drawer drawer;
@@ -43,7 +42,6 @@ public class Model {
             heightOffset = (imageHeight / 9) * 2;
 
             image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
-            pixels = new int [imageWidth * imageHeight];
             triangles = new Triangle[32];
             drawer = new Drawer();
 
@@ -116,10 +114,10 @@ public class Model {
     private void setTriangles() {
         int heightAddition = readImageHeight / 4;
         int widthAddition = readImageWidth / 4;
-        double [] pointsU = new double[4];
-        double [] pointsV = new double[4];
         double [] pointsX = new double[4];
         double [] pointsY = new double[4];
+        double centerU = 0;
+        double centerV = 0;
         int trianglesCount = 0;
         for (int y = 0; y < readImageHeight; y += heightAddition) {
             double curU = (double)y /readImageHeight;
@@ -130,17 +128,9 @@ public class Model {
              */
             for (int x = 0; x < readImageWidth; x += widthAddition) {
                 double curV = (double)x / readImageWidth;
-//                System.err.println("1. curU = " + curU + ", curV = " + curV);
 
-                pointsU[0] = curU + 0.25 / 3; //center U
-                pointsU[1] = curU;            //vertexes U
-                pointsU[2] = curU + 0.25;
-                pointsU[3] = curU;
-
-                pointsV[0] = curV + 0.25 / 3; //center V
-                pointsV[1] = curV;            //vertexes V
-                pointsV[2] = curV;
-                pointsV[3] = curV + 0.25;
+                centerU = curU + 0.25 / 3;
+                centerV = curV + 0.25 / 3;
 
                 pointsX[0] = heightOffset + x + heightAddition / 3; //center X
                 pointsX[1] = heightOffset + x;                      //vertexes X
@@ -151,9 +141,7 @@ public class Model {
                 pointsY[1] = widthOffset + y;                       //vertexes Y
                 pointsY[2] = widthOffset + y + widthAddition;
                 pointsY[3] = widthOffset + y;
- //               System.err.println("1. Expected center U = " + pointsU[0]);
- //               System.err.println("1. Expected center V = " + pointsV[0]);
-                triangles[trianglesCount++] = new Triangle(pointsU, pointsV, pointsX, pointsY, 0, imageWidth, imageHeight, random);
+                triangles[trianglesCount++] = new Triangle(centerU, centerV, pointsX, pointsY, 0, imageWidth, imageHeight, random);
             }
             /*
              * triangles  *
@@ -163,15 +151,8 @@ public class Model {
             for (int x = 0; x < readImageWidth; x += widthAddition) {
                 double curV = (double)x / readImageWidth;
 
-                pointsU[0] = curU + 0.5 / 3;  //center U
-                pointsU[1] = curU + 0.25;     //vertexes U
-                pointsU[2] = curU;
-                pointsU[3] = curU + 0.25;
-
-                pointsV[0] = curV + 0.5 / 3;  //center V
-                pointsV[1] = curV;            //vertexes V
-                pointsV[2] = curV + 0.25;
-                pointsV[3] = curV + 0.25;
+                centerU = curU + 0.5 / 3;
+                centerV = curV + 0.5 / 3;
 
                 pointsX[0] = heightOffset + x + heightAddition * 2 / 3; //center X
                 pointsX[1] = heightOffset + x + heightAddition;         //vertexes X
@@ -182,10 +163,8 @@ public class Model {
                 pointsY[1] = widthOffset + y;                           //vertexes Y
                 pointsY[2] = widthOffset + y + widthAddition;
                 pointsY[3] = widthOffset + y + widthAddition;
-//                System.err.println("2. Expected center U = " + pointsU[0]);
-//                System.err.println("2. Expected center V = " + pointsV[0]);
 
-                triangles[trianglesCount++] = new Triangle(pointsU, pointsV, pointsX, pointsY, 0, imageWidth, imageHeight, random);
+                triangles[trianglesCount++] = new Triangle(centerU, centerV, pointsX, pointsY, 0, imageWidth, imageHeight, random);
             }
         }
     }

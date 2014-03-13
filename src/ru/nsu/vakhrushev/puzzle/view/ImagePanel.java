@@ -19,6 +19,7 @@ public class ImagePanel extends JPanel {
     public ImagePanel(final Model model, final MainFrame mainFrame) {
         this.model = model;
         setBorder(BorderFactory.createLineBorder(Color.black));
+        setBackground(Color.GRAY);
         addMouseMotionListener(new MouseInputAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -34,9 +35,7 @@ public class ImagePanel extends JPanel {
         super.paintComponent(g);
         model.paintTrianglesInImage();
         BufferedImage image = model.getImage();
-        if (model.isNeedBilinearFiltering()) {
-        //    Filter.useBilinearFilter(image);
-        }
-        g.drawImage(image, 0, 0, null);
+        g.drawImage(image, this.getWidth() / 2 - image.getWidth() / 2, this.getHeight() / 2 - image.getHeight() / 2,
+                                                                                                                null);
     }
 }
