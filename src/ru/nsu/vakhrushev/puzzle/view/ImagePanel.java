@@ -15,6 +15,8 @@ import java.awt.image.BufferedImage;
 public class ImagePanel extends JPanel {
 
     private Model model;
+    private int offsetX;
+    private int offsetY;
 
     public ImagePanel(final Model model, final MainFrame mainFrame) {
         this.model = model;
@@ -24,7 +26,7 @@ public class ImagePanel extends JPanel {
             @Override
             public void mouseMoved(MouseEvent e) {
                 super.mouseMoved(e);
-                model.findTriangleUnderCursor(e.getX(), e.getY());
+                model.findTriangleUnderCursor(e.getX() - offsetX, e.getY() - offsetY);
                 mainFrame.updateInfoBar();
             }
         });
@@ -35,7 +37,8 @@ public class ImagePanel extends JPanel {
         super.paintComponent(g);
         model.paintTrianglesInImage();
         BufferedImage image = model.getImage();
-        g.drawImage(image, this.getWidth() / 2 - image.getWidth() / 2, this.getHeight() / 2 - image.getHeight() / 2,
-                                                                                                                null);
+        offsetY =  this.getHeight() / 2 - image.getHeight() / 2;
+        offsetX =  this.getWidth() / 2 - image.getWidth() / 2;
+        g.drawImage(image, offsetX ,offsetY, null);
     }
 }
